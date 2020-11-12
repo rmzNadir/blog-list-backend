@@ -1,14 +1,14 @@
-const config = require("./utils/config");
-const express = require("express");
-const app = express();
-const morgan = require("morgan");
-const cors = require("cors");
-const blogsRouter = require("./controllers/blogs");
-const middleware = require("./utils/middleware");
-const logger = require("./utils/logger");
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
+const cors = require('cors');
+const morgan = require('morgan');
+const express = require('express');
+const config = require('./utils/config');
+const blogsRouter = require('./controllers/blogs');
+const middleware = require('./utils/middleware');
+const logger = require('./utils/logger');
 
-logger.info("connecting to", config.MONGODB_URI);
+const app = express();
+logger.info('connecting to', config.MONGODB_URI);
 
 mongoose
   .connect(config.MONGODB_URI, {
@@ -18,45 +18,43 @@ mongoose
     useCreateIndex: true,
   })
   .then(() => {
-    logger.info("Connected to MongoDB");
+    logger.info('Connected to MongoDB');
   })
   .catch((err) => {
-    logger.error("Error connecting to MongoDB: ", err.message);
+    logger.error('Error connecting to MongoDB: ', err.message);
   });
 
 app.use(cors());
 app.use(express.json());
-morgan.token("body", function (req) {
-  return JSON.stringify(req.body);
-});
+morgan.token('body', (req) => JSON.stringify(req.body));
 
 app.use(
   morgan(function (tokens, req, res) {
-    if (tokens.method(req, res) === "POST") {
+    if (tokens.method(req, res) === 'POST') {
       return [
         tokens.method(req, res),
         tokens.url(req, res),
         tokens.status(req, res),
-        tokens.res(req, res, "content-length"),
-        "-",
-        tokens["response-time"](req, res),
-        "ms",
+        tokens.res(req, res, 'content-length'),
+        '-',
+        tokens['response-time'](req, res),
+        'ms',
         tokens.body(req, res),
-      ].join(" ");
+      ].join(' ');
     }
     return [
       tokens.method(req, res),
       tokens.url(req, res),
       tokens.status(req, res),
-      tokens.res(req, res, "content-length"),
-      "-",
-      tokens["response-time"](req, res),
-      "ms",
-    ].join(" ");
+      tokens.res(req, res, 'content-length'),
+      '-',
+      tokens['response-time'](req, res),
+      'ms',
+    ].join(' ');
   })
 );
 
-app.use("/api/blogs", blogsRouter);
+app.use('/api/blogs', blogsRouter);
 
 app.use(middleware.unknownEndpoint);
 app.use(middleware.errorHandler);
