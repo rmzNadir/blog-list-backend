@@ -1,4 +1,3 @@
-const chalk = require('chalk');
 const logger = require('./logger');
 
 const unknownEndpoint = (req, res) => {
@@ -6,9 +5,9 @@ const unknownEndpoint = (req, res) => {
 };
 
 const errorHandler = (err, req, res, next) => {
-  logger.error(chalk.red(err.message));
+  logger.error(err.message);
 
-  if (err.name === 'CastError') {
+  if (err.name === 'CastError' && err.kind === 'ObjectId') {
     return res.status(400).send({ error: 'malformatted id' });
   }
   if (err.name === 'ValidationError') {
