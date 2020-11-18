@@ -28,6 +28,20 @@ blogsRouter.post('/', async (req, res) => {
   }
 });
 
+blogsRouter.patch('/:id', async (req, res) => {
+  const { id } = req.params;
+  const data = await Blog.findByIdAndUpdate(
+    { _id: id },
+    { $set: req.body },
+    { new: true }
+  );
+  res.json({
+    status: 200,
+    msg: 'Blog updated',
+    data: data,
+  });
+});
+
 blogsRouter.delete('/:id', async (req, res) => {
   await Blog.findByIdAndRemove(req.params.id);
   res.status(204).end();

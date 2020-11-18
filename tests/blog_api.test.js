@@ -80,6 +80,54 @@ test("blog won't save if title or url are missing", async () => {
   await api.post('/api/blogs').send(newBlog).expect(400);
 });
 
+describe('deletion of a blog', () => {
+  test('succeeds with status code 204 if id is valid', async () => {
+    const blogs = await helper.blogsInDb();
+    const blogsToDelete = blogs[0];
+
+    await api.delete(`/api/blogs/${blogsToDelete.id}`).expect(204);
+
+    const blogsAfterCall = await helper.blogsInDb();
+
+    expect(blogsAfterCall).toHaveLength(helper.initialBlogs.length - 1);
+
+    const titles = blogsAfterCall.map((blog) => blog.title);
+
+    expect(titles).not.toContain(blogsToDelete.title);
+  });
+});
+
+describe('update of a specific blog', () => {
+  test('succeeds with status code 200 if successfully updated', async () => {
+    const blogs = await helper.blogsInDb();
+
+    const titles = blogs.map((blog) => blog.title);
+
+    const updatedBlog = {
+      title: 'Updated blog title',
+      author: 'Kent C. Dodds',
+      url: 'https://kentcdodds.com/blog/inversion-of-control',
+      likes: 2078,
+      id: blogs[0].id,
+    };
+
+    await api
+      .patch(`/api/blogs/${updatedBlog.id}`)
+      .send(updatedBlog)
+      .expect(200)
+      .expect('Content-Type', /application\/json/);
+
+    const blogsAfterCall = await helper.blogsInDb();
+
+    const titlesAfterCall = blogsAfterCall.map((blog) => blog.title);
+
+    expect(titles).not.toContain(updatedBlog.title);
+    expect(titlesAfterCall).not.toContain(blogs[0].title);
+    expect(titlesAfterCall).toContain(updatedBlog.title);
+    expect(blogsAfterCall[0].likes).toEqual(blogs[0].likes + 1);
+  });
+});
+
 afterAll(() => {
   mongoose.connection.close();
 });
