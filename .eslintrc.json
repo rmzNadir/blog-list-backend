@@ -13,6 +13,9 @@
     "no-console": "off",
     "func-names": "off",
     "no-process-exit": "off",
-    "object-shorthand": "off"
+    "object-shorthand": "off",
+    "node/no-unpublished-require": "warn",
+    "no-underscore-dangle": "off",
+    "no-param-reassign": "off"
   }
 }
