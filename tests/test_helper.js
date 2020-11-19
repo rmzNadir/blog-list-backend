@@ -1,4 +1,5 @@
 const Blog = require('../models/blog');
+const User = require('../models/user');
 
 const initialBlogs = [
   {
@@ -13,6 +14,19 @@ const initialBlogs = [
     url:
       'https://egghead.io/courses/understand-javascript-s-this-keyword-in-depth',
     likes: 2675,
+  },
+];
+
+const initialUsers = [
+  {
+    username: 'rmzNadir',
+    name: 'Diego González',
+    password: 'dummypassword',
+  },
+  {
+    username: 'Kok0n0',
+    name: 'Diego Ramírez',
+    id: 'dummypassword',
   },
 ];
 
@@ -34,8 +48,16 @@ const blogsInDb = async () => {
   return blogs.map((blog) => blog.toJSON());
 };
 
+const usersInDb = async () => {
+  const users = await User.find({});
+
+  return users.map((user) => user.toJSON());
+};
+
 module.exports = {
+  initialUsers,
   initialBlogs,
   nonExistingId,
   blogsInDb,
+  usersInDb,
 };

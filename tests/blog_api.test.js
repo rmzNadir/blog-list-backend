@@ -124,7 +124,7 @@ describe('update of a specific blog', () => {
     expect(titles).not.toContain(updatedBlog.title);
     expect(titlesAfterCall).not.toContain(blogs[0].title);
     expect(titlesAfterCall).toContain(updatedBlog.title);
-    expect(blogsAfterCall[0].likes).toEqual(blogs[0].likes + 1);
+    expect(blogsAfterCall[0].likes).toEqual(updatedBlog.likes);
   });
 });
 
