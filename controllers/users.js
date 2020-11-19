@@ -30,7 +30,7 @@ usersRouter.post('/', async (req, res) => {
 
   const savedUser = await user.save();
 
-  res.json(savedUser);
+  return res.json(savedUser);
 });
 
 // Get all users

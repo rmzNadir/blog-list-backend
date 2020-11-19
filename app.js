@@ -10,6 +10,7 @@ const logger = require('./utils/logger');
 // Routers
 const blogsRouter = require('./controllers/blogs');
 const usersRouter = require('./controllers/users');
+const loginRouter = require('./controllers/login');
 
 const app = express();
 logger.info('connecting to', config.MONGODB_URI);
@@ -58,8 +59,13 @@ app.use(
   })
 );
 
+// Use routers
+
 app.use('/api/blogs', blogsRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/login', loginRouter);
+
+// Useddleware
 
 app.use(middleware.unknownEndpoint);
 app.use(middleware.errorHandler);
