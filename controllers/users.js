@@ -36,7 +36,7 @@ usersRouter.post('/', async (req, res) => {
 // Get all users
 
 usersRouter.get('/', async (req, res) => {
-  const users = await User.find({});
+  const users = await User.find({}).populate('blogsPosted', { user: 0 });
   res.json(users);
 });
 
