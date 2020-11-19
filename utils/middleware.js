@@ -5,8 +5,6 @@ const unknownEndpoint = (req, res) => {
 };
 
 const errorHandler = (err, req, res, next) => {
-  logger.error(err.message);
-
   if (err.name === 'CastError' && err.kind === 'ObjectId') {
     return res.status(400).send({ error: 'malformatted id' });
   }
@@ -15,6 +13,13 @@ const errorHandler = (err, req, res, next) => {
       .status(400)
       .json({ error: `${err.name}: ${err.message}`, errorName: err.name }); // we send the error message as well as the error name so we can differentiate between multiple types of errors
   }
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({
+      error: 'invalid token',
+    });
+  }
+  logger.error(err.message);
+
   return next(err);
 };
 
