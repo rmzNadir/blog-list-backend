@@ -21,7 +21,7 @@ loginRouter.post('/', async (req, res) => {
 
   const userForToken = {
     username: user.username,
-    id: user._id,
+    id: user.id,
   };
 
   const token = jwt.sign(userForToken, process.env.SECRET);
