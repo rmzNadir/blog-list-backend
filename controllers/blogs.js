@@ -23,9 +23,11 @@ blogsRouter.post('/', async (req, res) => {
   const { token } = req;
 
   const decodedToken = jwt.verify(token, process.env.SECRET);
-  if (!token || !decodedToken.id) {
-    return res.status(401).json({ error: 'token missing or invalid' });
-  }
+
+  // Unnecessary because error middleware execution takes places in first???
+  // if (!token || !decodedToken.id) {
+  //   return res.status(401).json({ error: 'token missing or invalid' });
+  // }
 
   const user = await User.findById(decodedToken.id);
 
@@ -61,8 +63,29 @@ blogsRouter.patch('/:id', async (req, res) => {
 });
 
 blogsRouter.delete('/:id', async (req, res) => {
-  await Blog.findByIdAndRemove(req.params.id);
-  res.status(204).end();
+  const { token, params } = req;
+  const { id } = params;
+
+  const decodedToken = jwt.verify(token, process.env.SECRET);
+
+  // Unnecessary because error middleware execution takes places in first???
+  // if (!decodedToken.id) {
+  //   return res.status(401).json({ error: 'token missing or invalid' });
+  // }
+
+  const BlogToDelete = await Blog.findById(id).populate('user', '_id');
+
+  if (BlogToDelete.user._id.toString() === decodedToken.id.toString()) {
+    await Blog.findByIdAndRemove(id);
+    return res.json({
+      status: 200,
+      msg: "successfully deleted user's blog",
+    });
+  }
+  return res.json({
+    status: 403,
+    error: "Insufficient permissions to delete another user's blog",
+  });
 });
 
 module.exports = blogsRouter;
