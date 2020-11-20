@@ -11,17 +11,27 @@ const User = require('../models/user');
 // use npm test -- tests/blog_api.test.js to only run the tests in this file
 
 beforeEach(async () => {
+  await User.deleteMany({});
   await Blog.deleteMany({});
 
-  const blogObjects = helper.initialBlogs.map((blog) => new Blog(blog));
-  const blogPromiseArray = blogObjects.map((blog) => blog.save());
-  await Promise.all(blogPromiseArray);
-
-  await User.deleteMany({});
-
-  const userObjects = helper.initialUsers.map((user) => new User(user));
-  const UserPromiseArray = userObjects.map((user) => user.save());
+  const UserPromiseArray = helper.initialUsers.map(async (user) =>
+    api.post('/api/users').send(user)
+  );
   await Promise.all(UserPromiseArray);
+
+  const dummyUserCredentials = {
+    username: 'rmzNadir',
+    password: 'dummyPassword',
+  };
+  const userLogin = await api.post('/api/login').send(dummyUserCredentials);
+
+  const blogPromiseArray = helper.initialBlogs.map(async (blog) =>
+    api
+      .post('/api/blogs')
+      .send(blog)
+      .set('Authorization', `Bearer ${userLogin.body.token}`)
+  );
+  await Promise.all(blogPromiseArray);
 });
 
 test('the 2 blogs are returned', async () => {
@@ -39,20 +49,53 @@ test('check if _id was replaced by id', async () => {
   expect(blog._id).toBeUndefined();
 });
 
+test("a valid blog won't be added if there's no bearer token present", async () => {
+  const newBlog = {
+    title: 'Test blog',
+    author: 'Me :sunglasses:',
+    url: 'https://www.url.com/yeahlol',
+    likes: 2077,
+  };
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(401)
+    .expect('Content-Type', /application\/json/);
+
+  const blogsAtEnd = await helper.blogsInDb();
+  const titles = blogsAtEnd.map((b) => b.title);
+
+  expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+
+  expect(titles).not.toContain('Test blog');
+});
+
 test('a valid blog can be added', async () => {
-  const users = await helper.usersInDb();
+  const dummyUserCredentials = {
+    username: 'rmzNadir',
+    password: 'dummyPassword',
+  };
 
   const newBlog = {
     title: 'Test blog',
     author: 'Me :sunglasses:',
     url: 'https://www.url.com/yeahlol',
     likes: 2077,
-    userId: users[0].id,
   };
+
+  const userLogin = await api
+    .post('/api/login')
+    .send(dummyUserCredentials)
+    .expect(200)
+    .expect('Content-Type', /application\/json/);
+
+  // console.log('response', userLogin.body);
 
   await api
     .post('/api/blogs')
     .send(newBlog)
+    .set('Authorization', `Bearer ${userLogin.body.token}`)
     .expect(200)
     .expect('Content-Type', /application\/json/);
 
@@ -65,16 +108,28 @@ test('a valid blog can be added', async () => {
 });
 
 test('blog without likes is defaulted to 0', async () => {
-  const users = await helper.usersInDb();
+  const dummyUserCredentials = {
+    username: 'rmzNadir',
+    password: 'dummyPassword',
+  };
 
   const newBlog = {
     title: 'Test url 1',
     author: 'Me :sunglasses:',
     url: 'https://www.url.com/yeahlol',
-    userId: users[0].id,
   };
 
-  await api.post('/api/blogs').send(newBlog).expect(200);
+  const userLogin = await api
+    .post('/api/login')
+    .send(dummyUserCredentials)
+    .expect(200)
+    .expect('Content-Type', /application\/json/);
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .set('Authorization', `Bearer ${userLogin.body.token}`)
+    .expect(200);
 
   const blogsAtEnd = await helper.blogsInDb();
   const uploadedBlogLikes = blogsAtEnd.filter(
@@ -85,23 +140,49 @@ test('blog without likes is defaulted to 0', async () => {
 });
 
 test("blog won't save if title or url are missing", async () => {
-  const users = await helper.usersInDb();
+  const dummyUserCredentials = {
+    username: 'rmzNadir',
+    password: 'dummyPassword',
+  };
 
   const newBlog = {
     author: 'Me :sunglasses:',
     likes: 2000,
-    userId: users[0].id,
   };
 
-  await api.post('/api/blogs').send(newBlog).expect(400);
+  const userLogin = await api
+    .post('/api/login')
+    .send(dummyUserCredentials)
+    .expect(200)
+    .expect('Content-Type', /application\/json/);
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .set('Authorization', `Bearer ${userLogin.body.token}`)
+    .expect(400);
 });
 
 describe('Deletion of a blog', () => {
-  test('succeeds with status code 204 if id is valid', async () => {
-    const blogs = await helper.blogsInDb();
-    const blogsToDelete = blogs[0];
+  test('succeeds with status code 200 if token is valid and the token owner is the same as the blog owner', async () => {
+    const dummyUserCredentials = {
+      username: 'rmzNadir',
+      password: 'dummyPassword',
+    };
 
-    await api.delete(`/api/blogs/${blogsToDelete.id}`).expect(204);
+    const userLogin = await api
+      .post('/api/login')
+      .send(dummyUserCredentials)
+      .expect(200)
+      .expect('Content-Type', /application\/json/);
+
+    const blogs = await helper.blogsInDb();
+    console.log('blogs', blogs);
+
+    await api
+      .delete(`/api/blogs/${blogs[0].id}`)
+      .set('Authorization', `Bearer ${userLogin.body.token}`)
+      .expect(200);
 
     const blogsAfterCall = await helper.blogsInDb();
 
@@ -109,7 +190,7 @@ describe('Deletion of a blog', () => {
 
     const titles = blogsAfterCall.map((blog) => blog.title);
 
-    expect(titles).not.toContain(blogsToDelete.title);
+    expect(titles).not.toContain(blogs[0].title);
   });
 });
 
