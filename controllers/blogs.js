@@ -86,11 +86,13 @@ blogsRouter.delete('/:id', async (req, res) => {
     return res.json({
       status: 200,
       msg: "successfully deleted user's blog",
+      success: true,
     });
   }
   return res.json({
     status: 403,
     error: "Insufficient permissions to delete another user's blog",
+    success: false,
   });
 });
 
