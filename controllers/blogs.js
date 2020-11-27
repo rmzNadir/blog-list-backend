@@ -7,7 +7,8 @@ const User = require('../models/user');
 
 blogsRouter.get('/', async (req, res) => {
   const blogs = await Blog.find({}).populate('user', { blogsPosted: 0 });
-  res.json(blogs);
+  const sortedBlogs = blogs.sort((blogA, blogB) => blogB.likes - blogA.likes);
+  res.json(sortedBlogs);
 });
 
 blogsRouter.get('/:id', async (req, res) => {
